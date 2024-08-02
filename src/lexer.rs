@@ -1,40 +1,15 @@
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn tokenize_equation() {
-        assert_eq!(
-            tokenize("132 + 3 * (18 / 2) + 12"),
-            vec![
-                (Type::Literal, String::from("132")),
-                (Type::Operator, String::from("+")),
-                (Type::Literal, String::from("3")),
-                (Type::Operator, String::from("*")),
-                (Type::Operator, String::from("(")),
-                (Type::Literal, String::from("18")),
-                (Type::Operator, String::from("/")),
-                (Type::Literal, String::from("2")),
-                (Type::Operator, String::from(")")),
-                (Type::Operator, String::from("+")),
-                (Type::Literal, String::from("12")),
-            ],
-        );
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Type {
-    Identifier,
-    Keyword,
-    Operator,
-    Literal,
+#[derive(Debug, Clone, PartialEq, Eq, derive_new::new)]
+pub enum Token {
+    Identifier(String),
+    Keyword(String),
+    Operator(String),
+    Literal(String),
 }
 
 // Function tokenizes input string into separate tokens, returning a vector of those
 // tokens as strings, excluding empty tokens.
-pub fn tokenize(line: &str) -> Vec<(Type, String)> {
-    let mut tokens: Vec<(Type, String)> = vec![];
+pub fn tokenize(line: &str) -> Vec<Token> {
+    let mut tokens: Vec<Token> = vec![];
     let mut iter = line.chars().peekable();
 
     while let Some(char) = iter.next() {
@@ -51,9 +26,9 @@ pub fn tokenize(line: &str) -> Vec<(Type, String)> {
                         break;
                     }
                 }
-                tokens.push((Type::Literal, number_string));
+                tokens.push(Token::Literal(number_string));
             }
-            '(' | ')' | '+' | '-' | '*' | '/' => tokens.push((Type::Operator, char.to_string())),
+            '(' | ')' | '+' | '-' | '*' | '/' => tokens.push(Token::Operator(char.to_string())),
             _ => {
                 panic!("Invalid syntax!");
             }
@@ -61,4 +36,51 @@ pub fn tokenize(line: &str) -> Vec<(Type, String)> {
     }
 
     tokens
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tokenize_equation() {
+        let test_str = "132 + 3 * (18 / 2) + 12";
+        insta::assert_debug_snapshot!(tokenize(test_str), @r###"
+        [
+            Literal(
+                "132",
+            ),
+            Operator(
+                "+",
+            ),
+            Literal(
+                "3",
+            ),
+            Operator(
+                "*",
+            ),
+            Operator(
+                "(",
+            ),
+            Literal(
+                "18",
+            ),
+            Operator(
+                "/",
+            ),
+            Literal(
+                "2",
+            ),
+            Operator(
+                ")",
+            ),
+            Operator(
+                "+",
+            ),
+            Literal(
+                "12",
+            ),
+        ]
+        "###)
+    }
 }

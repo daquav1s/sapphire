@@ -4,3 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+derive-new = "0.6.0"
+insta = "1.39.0"
