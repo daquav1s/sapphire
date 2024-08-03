@@ -1,4 +1,4 @@
-use std::{char, iter::Peekable};
+use std::iter::Peekable;
 
 #[cfg(test)]
 mod tests {
@@ -7,19 +7,16 @@ mod tests {
     #[test]
     fn tokenize_equation() {
         assert_eq!(
-            tokenize("132 + 3 * (18 / 2) + 12"),
+            tokenize("var my_variable = 1 * 6 + another_variable"),
             vec![
-                Type::Int(132),
-                Type::Operator('+'),
-                Type::Int(3),
+                Type::Keyword(String::from("var")),
+                Type::Identifier(String::from("my_variable")),
+                Type::Operator('='),
+                Type::Int(1),
                 Type::Operator('*'),
-                Type::Operator('('),
-                Type::Int(18),
-                Type::Operator('/'),
-                Type::Int(2),
-                Type::Operator(')'),
+                Type::Int(6),
                 Type::Operator('+'),
-                Type::Int(12),
+                Type::Identifier(String::from("another_variable")),
             ],
         );
     }
@@ -27,13 +24,15 @@ mod tests {
 
 #[derive(Debug, PartialEq)]
 pub enum Type {
-    Identifier,
+    Identifier(String),
     Keyword(String),
     Operator(char),
     Int(i32),
     String(String),
 }
 
+// Processes characters sequentially to form and yield a string or numeric sequence
+// based on a specified criterion.
 pub fn consume(
     char: char,
     iter: &mut Peekable<impl Iterator<Item = char>>,
@@ -44,6 +43,9 @@ pub fn consume(
         if predicate(next_char) {
             result.push(next_char);
             iter.next();
+            if char == '"' && next_char == '"' {
+                break;
+            }
         } else {
             break;
         }
@@ -60,10 +62,21 @@ pub fn tokenize(line: &str) -> Vec<Type> {
     while let Some(char) = iter.next() {
         match char {
             char if char.is_whitespace() => continue,
-            char if char.is_ascii_alphabetic() => {
+            '"' => {
                 tokens.push(Type::String(consume(char, &mut iter, &mut |char: char| {
-                    char.is_ascii_alphabetic() || char == '_'
+                    char.is_ascii()
                 })));
+            }
+            char if char.is_ascii_alphabetic() => {
+                let contents = consume(char, &mut iter, &mut |char: char| {
+                    char.is_ascii_alphabetic() || char == '_'
+                });
+
+                if matches!(contents.as_str(), "if" | "else" | "for" | "var") {
+                    tokens.push(Type::Keyword(contents));
+                } else {
+                    tokens.push(Type::Identifier(contents));
+                }
             }
             '1'..='9' => {
                 tokens.push(Type::Int(
@@ -72,13 +85,11 @@ pub fn tokenize(line: &str) -> Vec<Type> {
                         .expect("Failed to parse string"),
                 ));
             }
-            '"' => continue,
-            '(' | ')' | '+' | '-' | '*' | '/' | '%' => tokens.push(Type::Operator(char)),
+            '(' | ')' | '+' | '-' | '*' | '/' | '%' | '=' => tokens.push(Type::Operator(char)),
             _ => {
                 panic!("Invalid syntax!");
             }
         }
     }
-
     tokens
 }
