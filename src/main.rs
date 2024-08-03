@@ -2,6 +2,8 @@ use std::io;
 
 mod lexer;
 mod parser;
+mod tree;
+
 fn main() {
     let mut input = String::new();
 
@@ -12,4 +14,6 @@ fn main() {
     let tokens = lexer::tokenize(&input);
 
     println!("{:?}", tokens);
+
+    parser::parse(&tokens);
 }

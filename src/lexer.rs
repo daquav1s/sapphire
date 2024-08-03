@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::{default, iter::Peekable};
 
 #[cfg(test)]
 mod tests {
@@ -29,6 +29,7 @@ pub enum Type {
     Operator(char),
     Int(i32),
     String(String),
+    EOF,
 }
 
 // Processes characters sequentially to form and yield a string or numeric sequence
@@ -91,5 +92,7 @@ pub fn tokenize(line: &str) -> Vec<Type> {
             }
         }
     }
+    tokens.push(Type::EOF); // temp EOF
+
     tokens
 }
